@@ -1,44 +1,53 @@
 from pytube import YouTube
+from moviepy.editor import VideoFileClip, AudioFileClip
 import os
 
+VIDEO_PATH = './movies'
+AUDIO_PATH = './audio'
+COMPLETE_PATH = './complete'
 
-def download_1080p_video(url, output_path='.'):
+# YouTube objektum létrehozása
+YOUTUBE_URL = 'https://www.youtube.com/watch?v=dcHbg3-dxis'
+yt = YouTube(YOUTUBE_URL)
+TITLE = yt.title
+
+video_streams = yt.streams.filter(only_video=True)
+for stream in video_streams:
+    print(f"{stream.resolution} - {stream.mime_type} - {stream.filesize // (1024 * 1024)} MB")
+
+
+def download_1080p_video():
     try:
-        # YouTube objektum létrehozása
-        yt = YouTube(url)
-
         # 1080p felbontású videó stream kiválasztása
         stream = yt.streams.filter(res="1080p", file_extension="mp4").first()
 
         if stream:
             # Letöltés indítása
-            print(f"Videó letöltés indítása: {yt.title}")
-            # stream.download(output_path)
-            stream.download('./movies')
-            print(f"Videó befejezve: {yt.title}")
+            print(f"Videó letöltés indítása: {TITLE}")
+            stream.download(VIDEO_PATH)
+            print(f"Videó befejezve: {TITLE}")
+
         else:
             print("Az 1080p felbontású videó nem érhető el ebben a formátumban.")
+
     except Exception as e:
         print(f"Hiba történt a letöltés során: {str(e)}")
 
 
-def download_audio(url, output_path='.'):
+def download_audio():
     try:
-        # YouTube objektum létrehozása
-        yt = YouTube(url)
-
         # Legjobb minőségű audio stream kiválasztása
         audio_stream = yt.streams.filter(only_audio=True).first()
 
         if audio_stream:
             # Letöltés indítása
-            print(f"Hang letöltése indítása: {yt.title}")
-            # audio_stream.download(output_path)
-            audio_stream.download('./audio')
-
+            print(f"Hang letöltése indítása: {TITLE}")
+            audio_stream.download(AUDIO_PATH)
             print(f"Hang letöltés befejezve:")
+
         else:
             print("Nem találtunk elérhető audio stream-et.")
+
     except Exception as e:
         print(f"Hiba történt a letöltés során: {str(e)}")
 
@@ -89,11 +98,31 @@ def list_available_captions(url):
         print(f"Hiba történt a feliratok lekérdezése során: {str(e)}")
 
 
+def merge_video_audio():
+    try:
+        # Videó betöltése
+        video_clip = VideoFileClip(f'{VIDEO_PATH}/{TITLE}.mp4')
+
+        # Audió betöltése
+        audio_clip = AudioFileClip(f'{AUDIO_PATH}/{TITLE}.mp4')
+
+        # Audió hozzáadása a videóhoz
+        video_with_audio = video_clip.set_audio(audio_clip)
+
+        # Egyesített fájl mentése
+        video_with_audio.write_videofile(f'{COMPLETE_PATH}/{TITLE}.mp4', codec="libx264", audio_codec="aac")
+
+        print(f"A fájlok egyesítése sikeres: {TITLE}.mp4")
+    except Exception as e:
+        print(f"Hiba történt a fájlok egyesítése során: {str(e)}")
+
+
 if __name__ == "__main__":
-    video_url = 'https://www.youtube.com/watch?v=0Co1Iptd4p4'
-    download_path = './movies'
-    print('Letöltés indítása...')
-    # download_1080p_video(video_url, download_path)
-    # download_audio(video_url, download_path)
+    download_1080p_video()
+    download_audio()
+    merge_video_audio()
     # download_caption(video_url, download_path)
-    list_available_captions(video_url)
+    # list_available_captions(video_url)
+
+
+
