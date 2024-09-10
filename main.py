@@ -1,5 +1,5 @@
 from pytube import YouTube
-import ffmpeg
+# import ffmpeg
 from moviepy.editor import VideoFileClip, AudioFileClip
 import re
 import subprocess
@@ -8,7 +8,7 @@ COMPLETE_PATH = './complete'
 INCOMPLETE_PATH = './incomplete'
 
 # YouTube objektum létrehozása
-YOUTUBE_URL = 'https://www.youtube.com/watch?v=taJ5pN7Zdn0'
+YOUTUBE_URL = 'https://www.youtube.com/watch?v=IL1nlWOciL0'
 yt = YouTube(YOUTUBE_URL)
 video_title = yt.title
 
@@ -102,7 +102,7 @@ def merge_video_audio_pymovie():
         print(f"Hiba történt a fájlok egyesítése során: {str(e)}")
 
 
-def merge_video_audio_ffmpeg_python():
+"""def merge_video_audio_ffmpeg_python():
     try:
         # FFmpeg segítségével a videó és audió fájlok egyesítése
         input_video = ffmpeg.input(f'{INCOMPLETE_PATH}/{filenames.filename_video}')
@@ -114,7 +114,7 @@ def merge_video_audio_ffmpeg_python():
 
         print(f"A fájlok egyesítése sikeres: {output_file}")
     except ffmpeg.Error as e:
-        print(f"Hiba történt a fájlok egyesítése során: {e.stderr.decode('utf-8')}")
+        print(f"Hiba történt a fájlok egyesítése során: {e.stderr.decode('utf-8')}")"""
 
 
 def merge_video_audio(video_file, audio_file, output_file):
@@ -134,8 +134,8 @@ def merge_video_audio(video_file, audio_file, output_file):
 
 if __name__ == "__main__":
     filenames = FileName(video_title)
-    # download_video()
-    # download_audio()
+    download_video()
+    download_audio()
 
     # MERGE
     # merge_video_audio_ffmpeg_python()
