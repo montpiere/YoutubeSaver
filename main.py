@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 import shutil
 
-# Create directories
+# Directories
 dir_path_incomplete = Path("incomplete")
 dir_path_incomplete.mkdir(exist_ok=True)
 dir_path_complete = Path("complete")
@@ -92,7 +92,7 @@ def download_audio():
         print(f"ERROR with audio download: {str(e)}")
 
 
-def merge_video_audio_pymovie():
+def merge_video_audio():
     try:
         # Loading video
         video_clip = VideoFileClip(f'{INCOMPLETE_PATH}/{filenames.filename_video}')
@@ -129,7 +129,7 @@ if __name__ == "__main__":
         download_audio()
 
         # MERGE
-        merge_video_audio_pymovie()
+        merge_video_audio()
 
     # REMOVE TEMPORARY DIR
     shutil.rmtree(dir_path_incomplete)
