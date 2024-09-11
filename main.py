@@ -1,9 +1,15 @@
-# Solve: Download from a youtube channel playlist
 from pytube import YouTube
-# import ffmpeg
 from moviepy.editor import VideoFileClip, AudioFileClip
 import re
-import subprocess
+from pathlib import Path
+import shutil
+
+# Create directories
+dir_path_incomplete = Path("incomplete")
+dir_path_incomplete.mkdir(exist_ok=True)
+dir_path_complete = Path("complete")
+dir_path_complete.mkdir(exist_ok=True)
+print(f"Directory created: {dir_path_incomplete}")
 
 COMPLETE_PATH = './complete'
 INCOMPLETE_PATH = './incomplete'
@@ -15,21 +21,21 @@ class FileName:
         self.filename_video = f"{self.filename}_video.mp4"
         self.filename_audio = f"{self.filename}_audio.mp4"
 
-    def create_filename(self, text, max_words=4):
+    @staticmethod
+    def create_filename(text, max_words=4):
         # Remove special characters
         text = re.sub(r'[^\w\s]', '', text)
         # First max_words finding
         words = text.split()[:max_words]
         # Merge words with underlines
         _filename = '_'.join(words)
+
         return _filename
 
 
 def read_urls_from_file():
     _urls = []
-    # Open file and read rows
-    with open('download_list', 'r') as file:
-        # Read all rows, cut spaces, add to list
+    with open('download_list.txt', 'r') as file:
         _urls = [line.strip() for line in file.readlines()]
 
     return _urls
@@ -39,107 +45,72 @@ def download_video():
     available_resolutions = []
     try:
         streams = yt.streams.filter(only_video=True)
-        for stream in streams:
-            available_resolutions.append(stream.resolution)
+        for video_stream in streams:
+            available_resolutions.append(video_stream.resolution)
 
         resolution = ''
         if "1080p" in available_resolutions:
-            print(f"1080p elérhető")
+            print(f"1080p available")
             resolution = "1080p"
         elif "1080p50" in available_resolutions:
-            print(f"1080p50 elérhető")
+            print(f"1080p50 available")
             resolution = "1080p50"
         elif "720p" in available_resolutions:
-            print(f"720p elérhető")
+            print(f"720p available")
             resolution = "720p"
         elif "720p50" in available_resolutions:
-            print(f"720p50 elérhető")
+            print(f"720p50 available")
             resolution = "720p50"
         else:
-            print("Nincs megfelelő formátum")
+            print("High quality resolution is not available")
             exit()
 
-        stream = yt.streams.filter(res=resolution, file_extension="mp4").first()
+        video_stream = yt.streams.filter(res=resolution, file_extension="mp4").first()
 
-        if stream:
-            print(f"Videó letöltés indítása...")
-            stream.download(INCOMPLETE_PATH, filename=f"{filenames.filename_video}")
-            print(f"Videó befejezve")
-
-        else:
-            print("Az 1080p felbontású videó nem érhető el ebben a formátumban.")
+        if video_stream:
+            print(f"Video downloading...")
+            video_stream.download(INCOMPLETE_PATH, filename=f"{filenames.filename_video}")
+            print(f"Video done")
 
     except Exception as e:
-        print(f"ERROR with download: {str(e)}")
+        print(f"ERROR with video download: {str(e)}")
 
 
 def download_audio():
     try:
-        # Legjobb minőségű audio stream kiválasztása
         audio_stream = yt.streams.filter(only_audio=True).first()
 
         if audio_stream:
-            # Letöltés indítása
-            print(f"Hang letöltése indítása...")
+            print(f"Audio downloading...")
             audio_stream.download(INCOMPLETE_PATH, filename=f"{filenames.filename_audio}")
-            print(f"Hang letöltés befejezve")
+            print(f"Audio done")
 
         else:
-            print("Nem találtunk elérhető audio stream-et.")
+            print("No available audio")
 
     except Exception as e:
-        print(f"Hiba történt a letöltés során: {str(e)}")
+        print(f"ERROR with audio download: {str(e)}")
 
 
 def merge_video_audio_pymovie():
     try:
-        # Videó betöltése
+        # Loading video
         video_clip = VideoFileClip(f'{INCOMPLETE_PATH}/{filenames.filename_video}')
 
-        # Audió betöltése
+        # Loadin video
         audio_clip = AudioFileClip(f'{INCOMPLETE_PATH}/{filenames.filename_audio}')
 
-        # Audió hozzáadása a videóhoz
+        # Add audio to video
         video_with_audio = video_clip.set_audio(audio_clip)
 
-        # Egyesített fájl mentése
+        # Save merged file
         video_with_audio.write_videofile(f'{COMPLETE_PATH}/{filenames.filename}.mp4', codec="libx264", audio_codec="aac")
 
-        print(f"A fájlok egyesítése sikeres: {filenames.filename}.mp4")
+        print(f"File merging success : {filenames.filename}.mp4")
 
     except Exception as e:
-        print(f"Hiba történt a fájlok egyesítése során: {str(e)}")
+        print(f"ERROR with merging: {str(e)}")
 
-
-"""def merge_video_audio_ffmpeg_python():
-    try:
-        # FFmpeg segítségével a videó és audió fájlok egyesítése
-        input_video = ffmpeg.input(f'{INCOMPLETE_PATH}/{filenames.filename_video}')
-        input_audio = ffmpeg.input(f'{INCOMPLETE_PATH}/{filenames.filename_audio}')
-        output_file = f"{COMPLETE_PATH}/{filenames.filename}.mp4"
-
-        # Videó és audió kombinálása és mentése
-        ffmpeg.output(input_video, input_audio, output_file).run(overwrite_output=True)
-
-        print(f"A fájlok egyesítése sikeres: {output_file}")
-    except ffmpeg.Error as e:
-        print(f"Hiba történt a fájlok egyesítése során: {e.stderr.decode('utf-8')}")
-
-
-def merge_video_audio(video_file, audio_file, output_file):
-    try:
-        # FFmpeg parancs futtatása a subprocess modullal
-        command = [
-            'ffmpeg', '-i', f'{INCOMPLETE_PATH}/{filenames.filename_video}', '-i', f'{INCOMPLETE_PATH}/{filenames.filename_audio}',
-            '-c:v', 'copy', '-c:a', 'aac', '-strict', 'experimental', f"{COMPLETE_PATH}/{filenames.filename}.mp4"
-        ]
-
-        # Futtatja az FFmpeg parancsot
-        subprocess.run(command, check=True)
-        print(f"A fájlok egyesítése sikeres: {output_file}")
-    except subprocess.CalledProcessError as e:
-        print(f"Hiba történt a fájlok egyesítése során: {e}")
-"""
 
 if __name__ == "__main__":
     urls = read_urls_from_file()
@@ -158,5 +129,8 @@ if __name__ == "__main__":
         download_audio()
 
         # MERGE
-        # merge_video_audio_ffmpeg_python()
         merge_video_audio_pymovie()
+
+    # REMOVE TEMPORARY DIR
+    shutil.rmtree(dir_path_incomplete)
+    print(f"Remove temporary dir: {dir_path_incomplete}")
