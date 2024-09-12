@@ -3,6 +3,9 @@ from moviepy.editor import VideoFileClip, AudioFileClip
 import re
 from pathlib import Path
 import shutil
+from youtube_transcript_api import YouTubeTranscriptApi
+from youtube_transcript_api._errors import NoTranscriptFound, TranscriptsDisabled
+import datetime
 
 
 class FileName:
@@ -10,6 +13,7 @@ class FileName:
         self.filename = self.create_filename(_video_title)
         self.filename_video = f"{self.filename}_video.mp4"
         self.filename_audio = f"{self.filename}_audio.mp4"
+        self.filename_caption = f"{self.filename}.srt"
 
     @staticmethod
     def create_filename(text, max_words=4):
@@ -82,12 +86,90 @@ def download_audio():
         print(f"ERROR with audio download: {str(e)}")
 
 
+# CAPTIONS
+def convert_time(seconds):
+    td = datetime.timedelta(seconds=seconds)
+    time_str = str(td)
+
+    if '.' in time_str:
+        hours, minutes, seconds = time_str.split(':')
+        seconds, milliseconds = seconds.split('.')
+        milliseconds = milliseconds[:3]  # Csak három számjegy az ezredmásodperchez
+    else:
+        hours, minutes, seconds = time_str.split(':')
+        milliseconds = "000"  # Ha nincs ezredmásodperc, 000-t használunk
+
+    return f"{hours.zfill(2)}:{minutes.zfill(2)}:{seconds.zfill(2)},{milliseconds}"
+
+
+def extract_video_id(url):
+    # id from URL
+    pattern = r'(?:https?://)?(?:www\.)?youtube\.com/watch\?v=([a-zA-Z0-9_-]+)|youtu\.be/([a-zA-Z0-9_-]+)'
+    match = re.match(pattern, url)
+
+    if match:
+        return match.group(1) if match.group(1) else match.group(2)
+    else:
+        raise ValueError("Bad URL")
+
+
+def download_caption(video_url_or_id):
+    filename = filenames.filename_caption
+
+    try:
+        if "youtube.com" in video_url_or_id or "youtu.be" in video_url_or_id:
+            video_id = extract_video_id(video_url_or_id)
+        else:
+            video_id = video_url_or_id
+    except ValueError as e:
+        print(f"ERROR: {e}")
+        return
+
+    try:
+        # en
+        try:
+            transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=['en'])
+        except NoTranscriptFound:
+            print("There is no 'en' caption")
+            # en-US
+            transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=['en-US'])
+
+    except NoTranscriptFound:
+        print("There is no 'en-US' caption")
+
+        # Try in translated captions
+        try:
+            transcripts = YouTubeTranscriptApi.list_transcripts(video_id)
+
+            translation = transcripts.find_transcript(transcripts.translation_languages)
+            transcript = translation.fetch()
+        except NoTranscriptFound:
+            print("No available caption there.")
+            return
+        except TranscriptsDisabled:
+            print("The captions are disabled for this video")
+            return
+
+    # SRT format
+    with open(f"{COMPLETE_PATH}/{filename}", "w", encoding="utf-8") as file:
+        for i, entry in enumerate(transcript, 1):
+            start_time = convert_time(entry['start'])
+            duration = entry.get('duration', 2.0)
+            end_time = convert_time(entry['start'] + duration)
+
+            file.write(f"{i}\n")
+            file.write(f"{start_time} --> {end_time}\n")
+            file.write(f"{entry['text']}\n\n")
+
+    print(f"Caption save to SRT: {filename}")
+
+
 def merge_video_audio():
     try:
         # Loading video
         video_clip = VideoFileClip(f'{INCOMPLETE_PATH}/{filenames.filename_video}')
 
-        # Loadin video
+        # Loading audio
         audio_clip = AudioFileClip(f'{INCOMPLETE_PATH}/{filenames.filename_audio}')
 
         # Add audio to video
@@ -103,9 +185,9 @@ def merge_video_audio():
 
 
 if __name__ == "__main__":
-    print(f'1. I want add an URL\n2. I added URLs to txt\n{"-" * 40}')
-    menu = input('Add your number:')
-    print(f'Your menu number: {menu}')
+    # print(f'1. I want add an URL\n2. I added URLs to txt\n{"-" * 40}')
+    # menu = input('Add your number:')
+    # print(f'Your menu number: {menu}')
 
     # Directories
     dir_path_incomplete = Path("incomplete")
@@ -118,6 +200,7 @@ if __name__ == "__main__":
     INCOMPLETE_PATH = './incomplete'
 
     urls = read_urls_from_file()
+    print(f'Found {len(urls)} video(s) in file')
 
     for url in urls:
         # CREATE YT OBJECT
@@ -131,6 +214,7 @@ if __name__ == "__main__":
         # DOWNLOAD
         download_video()
         download_audio()
+        download_caption(url)
 
         # MERGE
         merge_video_audio()
@@ -138,3 +222,6 @@ if __name__ == "__main__":
     # REMOVE TEMPORARY DIR
     shutil.rmtree(dir_path_incomplete)
     print(f"Remove temporary dir: {dir_path_incomplete}")
+
+# TODO:
+#  [ ]
