@@ -4,16 +4,6 @@ import re
 from pathlib import Path
 import shutil
 
-# Directories
-dir_path_incomplete = Path("incomplete")
-dir_path_incomplete.mkdir(exist_ok=True)
-dir_path_complete = Path("complete")
-dir_path_complete.mkdir(exist_ok=True)
-print(f"Directory created: {dir_path_incomplete}")
-
-COMPLETE_PATH = './complete'
-INCOMPLETE_PATH = './incomplete'
-
 
 class FileName:
     def __init__(self, _video_title):
@@ -113,6 +103,20 @@ def merge_video_audio():
 
 
 if __name__ == "__main__":
+    print(f'1. I want add an URL\n2. I added URLs to txt\n{"-" * 40}')
+    menu = input('Add your number:')
+    print(f'Your menu number: {menu}')
+
+    # Directories
+    dir_path_incomplete = Path("incomplete")
+    dir_path_incomplete.mkdir(exist_ok=True)
+    dir_path_complete = Path("complete")
+    dir_path_complete.mkdir(exist_ok=True)
+    print(f"Directory created: {dir_path_incomplete}")
+
+    COMPLETE_PATH = './complete'
+    INCOMPLETE_PATH = './incomplete'
+
     urls = read_urls_from_file()
 
     for url in urls:
