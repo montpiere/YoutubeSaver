@@ -1,7 +1,7 @@
 # YoutubeSaver
 
 ## Description
-Downloads videos from Youtube with this simple app in high quality (1080p, 720p... if available) with captions. 
+Download videos from Youtube with this simple app in high quality (1080p, 720p... if available) with captions. 
 It works in command line but no need to write complicated commands.
 
 ## Install
