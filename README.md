@@ -13,13 +13,13 @@ After download your specific folder simply run `setup.bat`. It will download and
 in a virtual environment automatically.
 
 ## Usage:
-Add as many YouTube (full) links as you want in a new line to the downloads.txt file.
+Add as many YouTube (full) links and/or playlist links as you want in a new line to the downloads.txt file.
 And just hit the `YoutubeSaver.bat` and it will work.
 You can find the downloaded files in the `complete` folder of the program library.
 
 
 ## Notes
-If you got first "400 bad request", please give a try to run the `fix_moviepy.bat`. 
+If you got first *"400 bad request"*, please give a try to run the `fix_moviepy.bat`. 
 Sometimes `pytube` is not installed first properly with its fix.
 
 ## How it works
@@ -38,6 +38,10 @@ First, the program tries to download 1080p videos, if it is not found, it tries 
 If there is a built-in subtitle, the program will try to download it first, if it is not available, it will try the automatic subtitles. The base language is _en_.
 
 _It tested on Windows._
+
+## Updates
+
+*2024.09.24 - an update that manages the playlists too*
 
 ## Authors:
 _montpiere.gh@gmail.com_
