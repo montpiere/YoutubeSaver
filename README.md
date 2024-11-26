@@ -7,16 +7,15 @@ It works in command line but no need to write complicated commands.
 ## Install
 Need [Python](https://www.python.org/downloads/) of course.
 
-### Install requirements
-
-After download your specific folder simply run `setup.bat`. It will download and install all dependencies
+- Download app into your specific folder
+- Run `setup.bat`. It will download and install all dependencies
 in a virtual environment automatically.
 
 ## Usage:
-Add as many YouTube (full) links and/or playlist links as you want in a new line to the downloads.txt file.
-And just hit the `YoutubeSaver.bat` and it will work.
-You can find the downloaded files in the `complete` folder of the program library.
+- Add as many YouTube (full) links and/or playlist links as you want in a new line to the `downloads.txt` file.
+- Run `YoutubeSaver.bat`
 
+You can find the downloaded files in the `complete` folder of the program library.
 
 ## Notes
 If you got first *"400 bad request"*, please give a try to run the `fix_moviepy.bat`. 
